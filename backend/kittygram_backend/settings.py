@@ -19,7 +19,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'cats.apps.CatsConfig',
-    'storages',  # ← Добавьте
+    'storages',  # Для S3
 ]
 
 MIDDLEWARE = [
@@ -93,8 +93,8 @@ if USE_S3:
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
     AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', 'https://storage.yandexcloud.net')
-    AWS_DEFAULT_ACL = os.getenv('AWS_DEFAULT_ACL', 'public-read')
-    AWS_QUERYSTRING_AUTH = os.getenv('AWS_QUERYSTRING_AUTH', 'False').lower() in ('true', '1', 't', 'yes')
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_QUERYSTRING_AUTH = False
     
     # Настройка хранения статики в S3
     STORAGES = {
@@ -112,8 +112,6 @@ if USE_S3:
     
     STATIC_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/static/'
     MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/'
-    
-    # Для S3 STATIC_ROOT не нужен
 else:
     # Локальная статика (для разработки)
     STATIC_URL = '/static/'
