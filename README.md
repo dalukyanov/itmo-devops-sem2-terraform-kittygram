@@ -1,24 +1,53 @@
-#  Как работать с репозиторием финального задания
+# Kittygram + Terraform
 
-## Что нужно сделать
+В данном проекте разворачивается инфраструктура в Яндекс.Облаке через Terraform. После чего деплоится Kittygram на созданную VM средствами GitHub Actions.
 
-Настроить запуск проекта Kittygram в контейнерах и CI/CD с помощью GitHub Actions
+## Основные компоненты
 
-## Как проверить работу с помощью автотестов
+- `tests.yml` — Вводные данные для проверки проекта
+- `.github/workflows/terraform.yml` - Terraform запускается с опциями: `plan`, `apply`, `destroy`.
+- `.github/workflows/deploy.yml` — деплой. Сборка, загрузка на созданный хост, запуск, тесты, уведомление в Telegram
+- `infra/` — Описание конфигурации Terraform
+- `docker-compose.production.yml` — Docker compose для целевого окружения
 
-В корне репозитория создайте файл tests.yml со следующим содержимым:
-```yaml
-repo_owner: ваш_логин_на_гитхабе
-kittygram_domain: полная ссылка (http://<ip-адрес вашей ВМ>:<порт gateway>) на ваш проект Kittygram
-dockerhub_username: ваш_логин_на_докерхабе
+## Полный список необходимых GitHub секретов
+
+```text
+APP_BUCKET_NAME
+DJANGO_SECRET_KEY
+DOCKERHUB_PASSWORD
+DOCKERHUB_USERNAME
+POSTGRES_DB
+POSTGRES_PASSWORD
+POSTGRES_USER
+SSH_PRIVATE_KEY
+SSH_PUBLIC_KEY
+TELEGRAM_TO
+TELEGRAM_TOKEN
+VM_USER
+YC_CLOUD_ID
+YC_FOLDER_ID
+YC_SERVICE_ACCOUNT_KEY
+YC_STORAGE_ACCESS_KEY
+YC_STORAGE_SECRET_KEY
+YC_TFSTATE_BUCKET
+YC_TOKEN
+YC_ZONE
 ```
 
-Скопируйте содержимое файла `.github/workflows/main.yml` в файл `kittygram_workflow.yml` в корневой директории проекта.
+## Порядок запуска
 
-Для локального запуска тестов создайте виртуальное окружение, установите в него зависимости из backend/requirements.txt и запустите в корневой директории проекта `pytest`.
+1. Создайте бакет для Terraform state, его имя хранится в YC_TFSTATE_BUCKET
+2. Создать GitHub Secrets из списка выше.
+3. Запустите workflow `Terraform` с action `plan`.
+4. Запустите workflow `Terraform` с action `apply`.
+5. Возьмите `kittygram_url` из output Terraform.
+6. Заполните `tests.yml` реальным URL вида `http://<external_ip>:9000`.
+7. Сделайте push в `main`, чтобы запустить `.github/workflows/deploy.yml`.
 
-## Чек-лист для проверки перед отправкой задания
+## Проверка приложения
 
-- Проект Kittygram доступен по ссылке, указанной в `tests.yml`.
-- Пуш в ветку main запускает тестирование и деплой Kittygram, а после успешного деплоя вам приходит сообщение в телеграм.
-- В корне проекта есть файл `kittygram_workflow.yml`.
+```bash
+curl http://<external_ip>:9000
+curl http://<external_ip>:9000/api/cats/
+```
