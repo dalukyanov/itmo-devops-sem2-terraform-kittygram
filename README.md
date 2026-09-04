@@ -10,6 +10,35 @@
 - `infra/` — Описание конфигурации Terraform
 - `docker-compose.production.yml` — Docker compose для целевого окружения
 
+## Создание сервисного аккаунта (необходимо из-за изменения политики Yandex Cloud по работе с YC_TOKEN)
+
+```text
+yc resource-manager folder add-access-binding <YC_FOLDER_ID> \
+  --role editor \
+  --service-account-name terraform-sa
+
+dalukyanov@Mac cloud-services-engineer-vms % yc resource-manager folder add-access-binding <YC_FOLDER_ID> \
+  --role editor \
+  --service-account-name terraform-sa
+done (2s)
+effective_deltas:
+  - action: ADD
+    access_binding:
+      role_id: editor
+      subject:
+        id: ******
+        type: serviceAccount
+
+
+dalukyanov@Mac cloud-services-engineer-vms % yc iam key create \
+  --service-account-name terraform-sa \
+  --output key.json
+id: ********
+service_account_id: ******
+created_at: "2026-09-04T10:23:33.232586971Z"
+key_algorithm: RSA_2048
+```
+
 ## Полный список необходимых GitHub секретов
 
 ```text
@@ -34,6 +63,8 @@ YC_TFSTATE_BUCKET
 YC_TOKEN # Подключение будет через сервисный аккаунт из-за изменений в политике Yandex Cloud в июле 2026
 YC_ZONE
 ```
+
+## Создание сервисного аккаунта
 
 ## Порядок запуска
 
