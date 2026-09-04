@@ -1,83 +1,107 @@
-data "yandex_compute_image" "ubuntu" {
-  family = var.image_family
-}
-
-resource "yandex_vpc_network" "kittygram" {
+# Создание облачной сети
+resource "yandex_vpc_network" "kittygram_network" {
   name = "kittygram-network"
 }
 
-resource "yandex_vpc_subnet" "kittygram" {
+# Создание подсети
+resource "yandex_vpc_subnet" "kittygram_subnet" {
   name           = "kittygram-subnet"
   zone           = var.yc_zone
-  network_id     = yandex_vpc_network.kittygram.id
+  network_id     = yandex_vpc_network.kittygram_network.id
   v4_cidr_blocks = ["10.10.0.0/24"]
 }
 
-resource "yandex_vpc_security_group" "kittygram" {
-  name        = "kittygram-sg"
-  description = "Allow SSH and Kittygram gateway only connections"
-  network_id  = yandex_vpc_network.kittygram.id
+# Группа безопасности
+resource "yandex_vpc_security_group" "kittygram_sg" {
+  name        = "kittygram-security-group"
+  description = "Security group for Kittygram VM"
+  network_id  = yandex_vpc_network.kittygram_network.id
 
   ingress {
-    description    = "SSH"
     protocol       = "TCP"
+    description    = "SSH"
+    v4_cidr_blocks = ["0.0.0.0/0"]
     port           = 22
-    v4_cidr_blocks = var.ssh_allowed_cidrs
   }
 
   ingress {
-    description    = "Kittygram gateway HTTP"
     protocol       = "TCP"
-    port           = var.gateway_port
-    v4_cidr_blocks = var.service_allowed_cidrs
+    description    = "HTTP (Kittygram gateway)"
+    v4_cidr_blocks = ["0.0.0.0/0"]
+    port           = 9000
   }
 
   egress {
-    description    = "Allow all outbound traffic"
     protocol       = "ANY"
+    description    = "Allow all outbound traffic"
     v4_cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
-resource "yandex_compute_instance" "kittygram" {
-  name                      = var.vm_name
-  hostname                  = var.vm_name
-  zone                      = var.yc_zone
-  platform_id               = "standard-v3"
-  allow_stopping_for_update = true
+# Бакет для Terraform state
+resource "yandex_storage_bucket" "tfstate" {
+  bucket = var.tfstate_bucket_name
+  acl    = "private"
+}
 
-  # Minimal resources
+# Бакет для статики приложения
+resource "yandex_storage_bucket" "kittygram" {
+  bucket     = var.app_bucket_name
+  depends_on = [yandex_storage_bucket.tfstate]
+  
+  # Настройка прав доступа для бакета
+  grant {
+    id          = var.yc_service_account_id
+    type        = "CanonicalUser"
+    permissions = ["READ", "WRITE"]
+  }
+}
+
+# Создание виртуальной машины
+resource "yandex_compute_instance" "kittygram_vm" {
+  name        = var.vm_name
+  platform_id = "standard-v3"
+  zone        = var.yc_zone
+
   resources {
     cores         = 2
-    memory        = 2
+    memory        = 4
     core_fraction = 20
   }
 
   boot_disk {
     initialize_params {
-      image_id = data.yandex_compute_image.ubuntu.id
-      size     = 20
-      type     = "network-hdd"
+      image_id    = "fd80bu10m2sevk4n1tgb"  # Ubuntu 22.04 LTS
+      size        = 30
+      type        = "network-hdd"
     }
   }
 
   network_interface {
-    subnet_id          = yandex_vpc_subnet.kittygram.id
+    subnet_id          = yandex_vpc_subnet.kittygram_subnet.id
+    security_group_ids = [yandex_vpc_security_group.kittygram_sg.id]
     nat                = true
-    security_group_ids = [yandex_vpc_security_group.kittygram.id]
   }
 
   metadata = {
-    user-data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
-      username       = var.vm_user
-      ssh_public_key = var.ssh_public_key
-    })
+    ssh-keys = "${var.vm_user}:${file(var.ssh_public_key)}"
+    user-data = <<EOF
+#cloud-config
+packages:
+  - docker.io
+  - docker-compose
+  - git
+  - curl
+runcmd:
+  - systemctl enable docker
+  - systemctl start docker
+  - usermod -aG docker ${var.vm_user}
+  - mkdir -p /opt/kittygram
+  - chown ${var.vm_user}:${var.vm_user} /opt/kittygram
+EOF
   }
-}
 
-resource "yandex_storage_bucket" "kittygram" {
-  bucket        = var.app_bucket_name
-  folder_id     = var.yc_folder_id
-  acl           = "private"
-  force_destroy = true
+  scheduling_policy {
+    preemptible = true
+  }
 }
