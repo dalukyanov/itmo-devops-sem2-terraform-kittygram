@@ -112,6 +112,8 @@ if USE_S3:
     
     STATIC_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/static/'
     MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/'
+    
+    # Для S3 STATIC_ROOT и STATICFILES_DIRS не используются
 else:
     # Локальная статика (для разработки)
     STATIC_URL = '/static/'
