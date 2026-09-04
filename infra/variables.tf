@@ -1,71 +1,74 @@
-variable "yc_token" {
-  description = "Yandex Cloud OAuth token"
-  sensitive   = true
-  default     = null
-}
-
-variable "yc_service_account_key_file" {
-  description = "Path to Yandex Cloud service account key file"
-  sensitive   = true
-}
-
-variable "yc_service_account_id" {
-  description = "Yandex Cloud Service Account ID"
-  type        = string
-}
+# Подключение будет через сервисный аккаунт из-за изменений в политике Yandex Cloud в июле 2026
+#variable "yc_token" {
+#  type      = string
+#  sensitive = true
+#}
 
 variable "yc_cloud_id" {
-  description = "Yandex Cloud ID"
-  type        = string
+  type = string
 }
 
 variable "yc_folder_id" {
-  description = "Yandex Cloud Folder ID"
-  type        = string
+  type = string
 }
 
 variable "yc_zone" {
-  description = "Yandex Cloud Zone"
-  type        = string
-  default     = "ru-central1-a"
-}
-
-variable "tfstate_bucket_name" {
-  description = "S3 bucket name for Terraform state"
-  type        = string
-}
-
-variable "app_bucket_name" {
-  description = "S3 bucket name for application static files"
-  type        = string
-}
-
-variable "vm_name" {
-  description = "VM name"
-  type        = string
-  default     = "kittygram-vm"
-}
-
-variable "vm_user" {
-  description = "VM username for SSH"
-  type        = string
-  default     = "ubuntu"
-}
-
-variable "ssh_public_key" {
-  description = "Path to SSH public key file"
-  type        = string
-  default     = "~/.ssh/id_ed25519.pub"
+  type    = string
+  default = "ru-central1-a"
 }
 
 variable "storage_access_key" {
-  description = "Yandex Cloud Storage access key"
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }
 
 variable "storage_secret_key" {
-  description = "Yandex Cloud Storage secret key"
+  type      = string
+  sensitive = true
+}
+
+variable "vm_name" {
+  type    = string
+  default = "kittygram-vm"
+}
+
+variable "vm_user" {
+  type    = string
+  default = "ubuntu"
+}
+
+variable "ssh_public_key" {
+  type      = string
+  sensitive = true
+}
+
+variable "gateway_port" {
+  type    = number
+  default = 9000
+}
+
+variable "ssh_allowed_cidrs" {
+  type    = list(string)
+  default = ["0.0.0.0/0"]
+}
+
+variable "service_allowed_cidrs" {
+  type    = list(string)
+  default = ["0.0.0.0/0"]
+}
+
+variable "image_family" {
+  type    = string
+  default = "ubuntu-2404-lts"
+}
+
+variable "app_bucket_name" {
+  type = string
+}
+
+# Данные key.json будут переданы в виде GitHub Secret
+variable "yc_service_account_key_file" {
+  description = "Path to service account key file"
   type        = string
-  sensitive   = true
+  default     = "/tmp/key.json"
 }
