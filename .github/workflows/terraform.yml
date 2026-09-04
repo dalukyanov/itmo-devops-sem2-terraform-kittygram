@@ -1,0 +1,91 @@
+name: Terraform
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Select the Terraform action'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./infra
+
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+
+      TF_VAR_yc_service_account_key_file: /tmp/key.json
+      TF_VAR_yc_cloud_id: ${{ secrets.YC_CLOUD_ID }}
+      TF_VAR_yc_folder_id: ${{ secrets.YC_FOLDER_ID }}
+      TF_VAR_yc_zone: ${{ secrets.YC_ZONE }}
+      TF_VAR_storage_access_key: ${{ secrets.YC_STORAGE_ACCESS_KEY }}
+      TF_VAR_storage_secret_key: ${{ secrets.YC_STORAGE_SECRET_KEY }}
+      TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+      TF_VAR_vm_user: ${{ secrets.VM_USER }}
+      TF_VAR_app_bucket_name: ${{ secrets.APP_BUCKET_NAME }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Create service account key file
+        run: |
+          echo '${{ secrets.YC_SERVICE_ACCOUNT_KEY }}' > /tmp/key.json
+          chmod 600 /tmp/key.json
+          echo "Key file created, size: $(wc -c < /tmp/key.json) bytes"
+
+      - name: Terraform Init
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.YC_TFSTATE_BUCKET }}" \
+            -backend-config="access_key=${{ secrets.YC_STORAGE_ACCESS_KEY }}" \
+            -backend-config="secret_key=${{ secrets.YC_STORAGE_SECRET_KEY }}"
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        if: ${{ github.event.inputs.action == 'plan' }}
+        run: terraform plan
+
+      - name: Terraform Apply
+        if: ${{ github.event.inputs.action == 'apply' }}
+        run: terraform apply -auto-approve
+
+      - name: Terraform Destroy
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        run: terraform destroy -auto-approve
+
+      - name: Show Terraform outputs
+        if: ${{ github.event.inputs.action == 'apply' }}
+        run: terraform output
+
+      - name: Clean up key file
+        if: always()
+        run: rm -f /tmp/key.json
