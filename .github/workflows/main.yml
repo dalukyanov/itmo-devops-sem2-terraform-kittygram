@@ -174,6 +174,9 @@ jobs:
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          YC_STORAGE_ACCESS_KEY: ${{ secrets.YC_STORAGE_ACCESS_KEY }}
+          YC_STORAGE_SECRET_KEY: ${{ secrets.YC_STORAGE_SECRET_KEY }}
+          APP_BUCKET_NAME: ${{ secrets.APP_BUCKET_NAME }}
         run: |
           # Настройка SSH с использованием ed25519 ключа
           mkdir -p ~/.ssh
@@ -189,7 +192,7 @@ jobs:
           # Копирование docker-compose.production.yml на сервер
           scp -o StrictHostKeyChecking=no docker-compose.production.yml "$VM_USER@$HOST:/opt/kittygram/docker-compose.production.yml"
           
-          # Создание .env файла на сервере
+          # Создание .env файла на сервере с S3 настройками
           ssh -o StrictHostKeyChecking=no "$VM_USER@$HOST" "cat > /opt/kittygram/.env" << EOF
           POSTGRES_DB=$POSTGRES_DB
           POSTGRES_USER=$POSTGRES_USER
@@ -201,6 +204,17 @@ jobs:
           DEBUG=False
           ALLOWED_HOSTS=$HOST,localhost,127.0.0.1
           DOCKERHUB_USERNAME=$DOCKERHUB_USERNAME
+          
+          # S3 настройки для Yandex Cloud
+          USE_S3=True
+          AWS_ACCESS_KEY_ID=$YC_STORAGE_ACCESS_KEY
+          AWS_SECRET_ACCESS_KEY=$YC_STORAGE_SECRET_KEY
+          AWS_STORAGE_BUCKET_NAME=$APP_BUCKET_NAME
+          AWS_S3_ENDPOINT_URL=https://storage.yandexcloud.net
+          AWS_DEFAULT_ACL=public-read
+          AWS_QUERYSTRING_AUTH=False
+          STATIC_URL=/static/
+          MEDIA_URL=/media/
           EOF
           
           # Деплой приложения
@@ -216,6 +230,7 @@ jobs:
           sudo docker compose -f docker-compose.production.yml exec -T backend python manage.py migrate --noinput
           sudo docker compose -f docker-compose.production.yml exec -T backend python manage.py collectstatic --noinput
           
+          # Проверка статуса контейнеров
           sudo docker compose -f docker-compose.production.yml ps
           EOF
 
