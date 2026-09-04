@@ -203,24 +203,20 @@ jobs:
           EOF
           
           # Деплой приложения
-          ssh -o StrictHostKeyChecking=no "$VM_USER@$HOST" << 'DEPLOY_SCRIPT'
+          ssh -o StrictHostKeyChecking=no "$VM_USER@$HOST" << EOF
           set -e
           cd /opt/kittygram
           
-          # Логин в Docker Hub
           echo "$DOCKERHUB_PASSWORD" | sudo docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           
-          # Скачивание образов и запуск контейнеров
           sudo docker compose -f docker-compose.production.yml pull
           sudo docker compose -f docker-compose.production.yml up -d
           
-          # Выполнение миграций и сборка статики
           sudo docker compose -f docker-compose.production.yml exec -T backend python manage.py migrate --noinput
           sudo docker compose -f docker-compose.production.yml exec -T backend python manage.py collectstatic --noinput
           
-          # Проверка статуса контейнеров
           sudo docker compose -f docker-compose.production.yml ps
-          DEPLOY_SCRIPT
+          EOF
 
   auto_tests:
     runs-on: ubuntu-latest
