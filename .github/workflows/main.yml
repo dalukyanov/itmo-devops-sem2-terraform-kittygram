@@ -189,13 +189,14 @@ jobs:
           # Копирование docker-compose.production.yml на сервер
           scp -o StrictHostKeyChecking=no docker-compose.production.yml "$VM_USER@$HOST:/opt/kittygram/docker-compose.production.yml"
           
-          # Создание .env файла на сервере
+          # Создание .env файла на сервере с добавленной DB_ENGINE
           ssh -o StrictHostKeyChecking=no "$VM_USER@$HOST" "cat > /opt/kittygram/.env" << EOF
           POSTGRES_DB=$POSTGRES_DB
           POSTGRES_USER=$POSTGRES_USER
           POSTGRES_PASSWORD=$POSTGRES_PASSWORD
           DB_HOST=postgres
           DB_PORT=5432
+          DB_ENGINE=django.db.backends.postgresql
           SECRET_KEY=$DJANGO_SECRET_KEY
           DEBUG=False
           ALLOWED_HOSTS=$HOST,localhost,127.0.0.1
