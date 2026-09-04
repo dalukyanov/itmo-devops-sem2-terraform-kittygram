@@ -31,7 +31,7 @@ YC_SERVICE_ACCOUNT_KEY
 YC_STORAGE_ACCESS_KEY
 YC_STORAGE_SECRET_KEY
 YC_TFSTATE_BUCKET
-YC_TOKEN
+YC_TOKEN # Подключение будет через сервисный аккаунт из-за изменений в политике Yandex Cloud в июле 2026
 YC_ZONE
 ```
 
