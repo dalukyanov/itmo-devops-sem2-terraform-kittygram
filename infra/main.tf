@@ -48,7 +48,7 @@ resource "yandex_storage_bucket" "tfstate" {
 resource "yandex_storage_bucket" "kittygram" {
   bucket     = var.app_bucket_name
   depends_on = [yandex_storage_bucket.tfstate]
-  
+
   # Настройка прав доступа для бакета
   grant {
     id          = var.yc_service_account_id
@@ -58,7 +58,7 @@ resource "yandex_storage_bucket" "kittygram" {
 }
 
 # Создание виртуальной машины
-resource "yandex_compute_instance" "kittygram_vm" {
+resource "yandex_compute_instance" "kittygram" {
   name        = var.vm_name
   platform_id = "standard-v3"
   zone        = var.yc_zone
@@ -71,9 +71,9 @@ resource "yandex_compute_instance" "kittygram_vm" {
 
   boot_disk {
     initialize_params {
-      image_id    = "fd80bu10m2sevk4n1tgb"  # Ubuntu 22.04 LTS
-      size        = 30
-      type        = "network-hdd"
+      image_id = "fd80bu10m2sevk4n1tgb" # Ubuntu 22.04 LTS
+      size     = 30
+      type     = "network-hdd"
     }
   }
 
@@ -85,20 +85,10 @@ resource "yandex_compute_instance" "kittygram_vm" {
 
   metadata = {
     ssh-keys = "${var.vm_user}:${file(var.ssh_public_key)}"
-    user-data = <<EOF
-#cloud-config
-packages:
-  - docker.io
-  - docker-compose
-  - git
-  - curl
-runcmd:
-  - systemctl enable docker
-  - systemctl start docker
-  - usermod -aG docker ${var.vm_user}
-  - mkdir -p /opt/kittygram
-  - chown ${var.vm_user}:${var.vm_user} /opt/kittygram
-EOF
+    user-data = templatefile("${path.module}/cloud-init.yaml.tftpl", {
+      username       = var.vm_user
+      ssh_public_key = file(var.ssh_public_key)
+    })
   }
 
   scheduling_policy {
