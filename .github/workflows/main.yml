@@ -46,7 +46,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push to DockerHub
         uses: docker/build-push-action@v4
         with:
@@ -69,7 +69,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push to DockerHub
         uses: docker/build-push-action@v4
         with:
@@ -92,7 +92,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push to DockerHub
         uses: docker/build-push-action@v4
         with:
@@ -163,29 +163,34 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Prepare SSH key and copy compose file
+      - name: Deploy to server
         env:
           HOST: ${{ needs.get_infra_outputs.outputs.host }}
           VM_USER: ${{ secrets.VM_USER }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts
-          scp docker-compose.production.yml "$VM_USER@$HOST:/opt/kittygram/docker-compose.production.yml"
-
-      - name: Create production env file on server
-        env:
-          HOST: ${{ needs.get_infra_outputs.outputs.host }}
-          VM_USER: ${{ secrets.VM_USER }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
         run: |
-          ssh "$VM_USER@$HOST" "cat > /opt/kittygram/.env" << EOF
+          # Настройка SSH с использованием ed25519 ключа
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          
+          # Добавление хоста в known_hosts
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          
+          # Создание директории на сервере
+          ssh -o StrictHostKeyChecking=no "$VM_USER@$HOST" "sudo mkdir -p /opt/kittygram && sudo chown $VM_USER:$VM_USER /opt/kittygram"
+          
+          # Копирование docker-compose.production.yml на сервер
+          scp -o StrictHostKeyChecking=no docker-compose.production.yml "$VM_USER@$HOST:/opt/kittygram/docker-compose.production.yml"
+          
+          # Создание .env файла на сервере
+          ssh -o StrictHostKeyChecking=no "$VM_USER@$HOST" "cat > /opt/kittygram/.env" << EOF
           POSTGRES_DB=$POSTGRES_DB
           POSTGRES_USER=$POSTGRES_USER
           POSTGRES_PASSWORD=$POSTGRES_PASSWORD
@@ -196,24 +201,26 @@ jobs:
           ALLOWED_HOSTS=$HOST,localhost,127.0.0.1
           DOCKERHUB_USERNAME=$DOCKERHUB_USERNAME
           EOF
-
-      - name: Deploy Kittygram
-        env:
-          HOST: ${{ needs.get_infra_outputs.outputs.host }}
-          VM_USER: ${{ secrets.VM_USER }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-        run: |
-          ssh "$VM_USER@$HOST" << EOF
+          
+          # Деплой приложения
+          ssh -o StrictHostKeyChecking=no "$VM_USER@$HOST" << 'DEPLOY_SCRIPT'
           set -e
           cd /opt/kittygram
+          
+          # Логин в Docker Hub
           echo "$DOCKERHUB_PASSWORD" | sudo docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          
+          # Скачивание образов и запуск контейнеров
           sudo docker compose -f docker-compose.production.yml pull
           sudo docker compose -f docker-compose.production.yml up -d
+          
+          # Выполнение миграций и сборка статики
           sudo docker compose -f docker-compose.production.yml exec -T backend python manage.py migrate --noinput
           sudo docker compose -f docker-compose.production.yml exec -T backend python manage.py collectstatic --noinput
+          
+          # Проверка статуса контейнеров
           sudo docker compose -f docker-compose.production.yml ps
-          EOF
+          DEPLOY_SCRIPT
 
   auto_tests:
     runs-on: ubuntu-latest
