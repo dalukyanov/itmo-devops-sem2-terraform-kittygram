@@ -1,50 +1,39 @@
-# version: '3.8' - deprecated
-
-volumes:
-  pg_data:
-  static:
-  media:
+version: '3.8'
 
 services:
   postgres:
     image: postgres:13.10
+    container_name: kittygram-postgres-1
     env_file: .env
     volumes:
-      - pg_data:/var/lib/postgresql/data
-    networks:
-      - kittygram_network
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
 
   backend:
-    image: indeicheg/kittygram_backend:latest
+    image: ${DOCKERHUB_USERNAME}/kittygram_backend:latest
+    container_name: kittygram-backend-1
     env_file: .env
-    volumes:
-      - static:/app/collected_static
-      - media:/app/media
     depends_on:
       - postgres
-    networks:
-      - kittygram_network
+    restart: always
 
   frontend:
-    image: indeicheg/kittygram_frontend:latest
-    volumes:
-      - static:/app/static
-    networks:
-      - kittygram_network
+    image: ${DOCKERHUB_USERNAME}/kittygram_frontend:latest
+    container_name: kittygram-frontend-1
+    env_file: .env
+    depends_on:
+      - backend
+    restart: always
 
   gateway:
-    image: indeicheg/kittygram_gateway:latest
+    image: ${DOCKERHUB_USERNAME}/kittygram_gateway:latest
+    container_name: kittygram-gateway-1
     ports:
-      - "80:80"
-    volumes:
-      - static:/var/html/static:ro
-      - media:/var/html/media:ro
+      - "9000:80"  # ← ИЗМЕНЕНО: проброс порта 9000 на 80 внутри контейнера
     depends_on:
       - backend
       - frontend
-    networks:
-      - kittygram_network
+    restart: always
 
-networks:
-  kittygram_network:
-    driver: bridge
+volumes:
+  postgres_data:
