@@ -45,7 +45,7 @@ resource "yandex_compute_instance" "kittygram" {
   zone                      = var.yc_zone
   platform_id               = "standard-v3"
   allow_stopping_for_update = true
-  
+
   # Minimal resources
   resources {
     cores         = 2
