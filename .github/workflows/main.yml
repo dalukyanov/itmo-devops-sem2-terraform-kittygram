@@ -213,8 +213,6 @@ jobs:
           AWS_S3_ENDPOINT_URL=https://storage.yandexcloud.net
           AWS_DEFAULT_ACL=public-read
           AWS_QUERYSTRING_AUTH=False
-          STATIC_URL=/static/
-          MEDIA_URL=/media/
           EOF
           
           # Деплой приложения
@@ -227,11 +225,17 @@ jobs:
           sudo docker compose -f docker-compose.production.yml pull
           sudo docker compose -f docker-compose.production.yml up -d
           
+          # Ждем запуска контейнеров
+          sleep 10
+          
           sudo docker compose -f docker-compose.production.yml exec -T backend python manage.py migrate --noinput
           sudo docker compose -f docker-compose.production.yml exec -T backend python manage.py collectstatic --noinput
           
           # Проверка статуса контейнеров
           sudo docker compose -f docker-compose.production.yml ps
+          
+          # Проверка доступности статики
+          curl -s -o /dev/null -w "Static files check: %{http_code}\n" http://localhost:9000/static/admin/css/base.css
           EOF
 
   auto_tests:

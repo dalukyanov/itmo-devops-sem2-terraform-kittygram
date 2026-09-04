@@ -78,6 +78,11 @@ resource "yandex_compute_instance" "kittygram" {
 resource "yandex_storage_bucket" "kittygram" {
   bucket        = var.app_bucket_name
   folder_id     = var.yc_folder_id
-  acl           = "private"
   force_destroy = true
+  
+  # Публичный доступ для статики
+  anonymous_access_flags {
+    read = true
+    list = true
+  }
 }

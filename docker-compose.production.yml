@@ -3,7 +3,6 @@ version: '3.8'
 services:
   postgres:
     image: postgres:13.10
-    container_name: kittygram-postgres-1
     env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -11,7 +10,6 @@ services:
 
   backend:
     image: ${DOCKERHUB_USERNAME}/kittygram_backend:latest
-    container_name: kittygram-backend-1
     env_file: .env
     depends_on:
       - postgres
@@ -19,7 +17,6 @@ services:
 
   frontend:
     image: ${DOCKERHUB_USERNAME}/kittygram_frontend:latest
-    container_name: kittygram-frontend-1
     env_file: .env
     depends_on:
       - backend
@@ -27,9 +24,8 @@ services:
 
   gateway:
     image: ${DOCKERHUB_USERNAME}/kittygram_gateway:latest
-    container_name: kittygram-gateway-1
     ports:
-      - "9000:80"  # ← ИЗМЕНЕНО: проброс порта 9000 на 80 внутри контейнера
+      - "9000:80"
     depends_on:
       - backend
       - frontend
