@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # База данных PostgreSQL
   postgres:
     image: postgres:13.10
     env_file: .env
@@ -8,34 +9,41 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: always
 
+  # Бэкенд на Django
   backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     image: ${DOCKERHUB_USERNAME}/kittygram_backend:latest
     env_file: .env
     depends_on:
       - postgres
     restart: always
 
+  # Фронтенд (SPA)
   frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     image: ${DOCKERHUB_USERNAME}/kittygram_frontend:latest
     env_file: .env
     depends_on:
       - backend
     restart: always
-    volumes:
-      - frontend_static:/static  # Добавляем том для статики
 
+  # Nginx-шлюз (прокси и раздача статики)
   gateway:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile
     image: ${DOCKERHUB_USERNAME}/kittygram_gateway:latest
     ports:
       - "9000:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - frontend_static:/usr/share/nginx/html:ro  # Монтируем статику фронтенда
     depends_on:
       - backend
       - frontend
     restart: always
 
+# Объявление томов для сохранения данных
 volumes:
   postgres_data:
-  frontend_static:  # Объявляем новый том
