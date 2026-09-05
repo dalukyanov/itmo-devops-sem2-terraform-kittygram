@@ -18,18 +18,25 @@ services:
   frontend:
     image: ${DOCKERHUB_USERNAME}/kittygram_frontend:latest
     env_file: .env
+    volumes:
+      - frontend_static:/app/static  # Монтируем том со статикой
     depends_on:
       - backend
     restart: always
+    # Запускаем сборку статики при старте
+    command: ["sh", "-c", "npm run build && cp -r /app/build/. /app/static/ && tail -f /dev/null"]
 
   gateway:
     image: ${DOCKERHUB_USERNAME}/kittygram_gateway:latest
     ports:
       - "9000:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - frontend_static:/usr/share/nginx/html:ro  # Монтируем том со статикой
     depends_on:
-      - backend
       - frontend
     restart: always
 
 volumes:
   postgres_data:
+  frontend_static:  # Объявляем общий том
