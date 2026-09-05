@@ -19,7 +19,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'djoser',
     'cats.apps.CatsConfig',
-    'storages',  # Для S3
 ]
 
 MIDDLEWARE = [
@@ -84,42 +83,14 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-# ============ S3 НАСТРОЙКИ ============
-USE_S3 = os.getenv('USE_S3', 'False').lower() in ('true', '1', 't', 'yes')
+# ============ ЛОКАЛЬНОЕ ХРАНЕНИЕ СТАТИКИ И МЕДИА ============
+# Статические файлы (CSS, JS, изображения для админки)
+STATIC_URL = '/static/'
+STATIC_ROOT = '/app/staticfiles/'  # Путь внутри контейнера, совпадает с volume
 
-if USE_S3:
-    # S3 настройки для Yandex Cloud
-    AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', 'https://storage.yandexcloud.net')
-    AWS_DEFAULT_ACL = 'public-read'
-    AWS_QUERYSTRING_AUTH = False
-    
-    # Настройка хранения статики в S3
-    STORAGES = {
-        "default": {
-            "BACKEND": "django.core.files.storage.FileSystemStorage",
-        },
-        "staticfiles": {
-            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-            "OPTIONS": {
-                "location": "static",
-                "default_acl": "public-read",
-            },
-        },
-    }
-    
-    STATIC_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/static/'
-    MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/'
-    
-    # Для S3 STATIC_ROOT и STATICFILES_DIRS не используются
-else:
-    # Локальная статика (для разработки)
-    STATIC_URL = '/static/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Медиафайлы (загруженные пользователями изображения)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = '/app/media/'  # Путь внутри контейнера, совпадает с volume
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

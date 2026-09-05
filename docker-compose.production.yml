@@ -12,10 +12,10 @@ services:
     image: ${DOCKERHUB_USERNAME}/kittygram_backend:latest
     env_file: .env
     volumes:
-      # 1. Добавляем том для статики Django
-      - backend_static:/var/html/static/
-      # 2. Добавляем том для медиафайлов Django
-      - backend_media:/var/html/media/
+      # Том для статики Django (путь совпадает с STATIC_ROOT в settings.py)
+      - backend_static:/app/staticfiles/
+      # Том для медиафайлов Django (путь совпадает с MEDIA_ROOT в settings.py)
+      - backend_media:/app/media/
     depends_on:
       - postgres
     restart: always
@@ -28,7 +28,7 @@ services:
     depends_on:
       - backend
     restart: always
-    # Сборка статики при старте (оставляем как есть)
+    # Сборка статики при старте
     command: ["sh", "-c", "npm run build && cp -r /app/build/. /app/static/ && tail -f /dev/null"]
 
   gateway:
@@ -36,19 +36,19 @@ services:
     ports:
       - "9000:80"
     volumes:
-      # 3. Монтируем том со статикой фронтенда
+      # Статика фронтенда
       - frontend_static:/usr/share/nginx/html:ro
-      # 4. Монтируем том со статикой бэкенда
+      # Статика бэкенда (путь совпадает с alias в nginx.conf)
       - backend_static:/var/html/static/:ro
-      # 5. Монтируем том с медиафайлами бэкенда
+      # Медиа бэкенда (путь совпадает с alias в nginx.conf)
       - backend_media:/var/html/media/:ro
     depends_on:
       - frontend
-      - backend  # 6. Добавляем зависимость от backend
+      - backend
     restart: always
 
 volumes:
   postgres_data:
   frontend_static:
-  backend_static:   # 7. Объявляем новый том для статики бэкенда
-  backend_media:    # 8. Объявляем новый том для медиа бэкенда
+  backend_static:
+  backend_media:
