@@ -8,6 +8,7 @@ terraform {
     }
   }
 
+  # S3 бакет для хранения стейта Terraform
   backend "s3" {
     endpoints = {
       s3 = "https://storage.yandexcloud.net"

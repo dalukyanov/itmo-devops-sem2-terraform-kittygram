@@ -35,7 +35,7 @@ runcmd:
     apt-get update
     apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-    # Настройка Docker
+    # Настройка Docker. Выдача прав для юзера
     systemctl enable --now docker
     usermod -aG docker ${username}
 

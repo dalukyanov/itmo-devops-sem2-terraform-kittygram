@@ -25,6 +25,16 @@ resource "yandex_vpc_security_group" "kittygram" {
     v4_cidr_blocks = var.ssh_allowed_cidrs
   }
 
+  # Это костыль, т.к. ссылки на медиа захардкожены в проекте. Ведут на 80 порт по дефолту.
+  # Но при этом в задании написано, что надо запускать на 9000 порту проект, а не на 80.
+  # Переписывание фронтенда выходит за рамки задания, поэтому так
+  ingress {
+    protocol       = "TCP"
+    description    = "HTTP (для фронтенда и медиа)"
+    v4_cidr_blocks = ["0.0.0.0/0"]
+    port           = 80
+  }
+
   ingress {
     description    = "Kittygram gateway HTTP"
     protocol       = "TCP"
