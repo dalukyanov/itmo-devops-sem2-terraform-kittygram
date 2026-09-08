@@ -51,12 +51,14 @@ jobs:
         with:
           terraform_wrapper: false
 
+      # Вместо YC_TOKEN
       - name: Create service account key file
         run: |
           echo '${{ secrets.YC_SERVICE_ACCOUNT_KEY }}' > /tmp/key.json
           chmod 600 /tmp/key.json
           echo "Key file created, size: $(wc -c < /tmp/key.json) bytes"
 
+      # Ранее сгенерированные ключи ранее переданы через секреты в виде текста, пишем их в файлы
       - name: Copy SSH keys to default location
         run: |
           mkdir -p ~/.ssh
@@ -65,6 +67,7 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           chmod 644 ~/.ssh/id_ed25519.pub
 
+      # Храним стейт TF в заранее созданном S3 бакете
       - name: Terraform Init
         run: |
           terraform init \

@@ -3,6 +3,7 @@ ssh_pwauth: false
 package_update: true
 package_upgrade: true
 
+# Создаём юзера и группы на виртуалке, передам ключи
 users:
   - default
   - name: ${username}
@@ -12,6 +13,7 @@ users:
     ssh_authorized_keys:
       - ${ssh_public_key}
 
+# Могут понадобиться при диагностике
 packages:
   - ca-certificates
   - curl

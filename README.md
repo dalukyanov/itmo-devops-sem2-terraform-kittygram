@@ -42,26 +42,28 @@ key_algorithm: RSA_2048
 ## Полный список необходимых GitHub секретов
 
 ```text
-APP_BUCKET_NAME
-DJANGO_SECRET_KEY
-DOCKERHUB_PASSWORD
-DOCKERHUB_USERNAME
-POSTGRES_DB
-POSTGRES_PASSWORD
-POSTGRES_USER
-SSH_PRIVATE_KEY
-SSH_PUBLIC_KEY
-TELEGRAM_TO
-TELEGRAM_TOKEN
-VM_USER
-YC_CLOUD_ID
-YC_FOLDER_ID
-YC_SERVICE_ACCOUNT_KEY
-YC_STORAGE_ACCESS_KEY
-YC_STORAGE_SECRET_KEY
-YC_TFSTATE_BUCKET
-YC_TOKEN # Подключение будет через сервисный аккаунт из-за изменений в политике Yandex Cloud в июле 2026
-YC_ZONE
+APP_BUCKET_NAME=dalukyanov-app-bucket
+DJANGO_SECRET_KEY=<DJANGO_SECRET_KEY>
+DOCKERHUB_PASSWORD=<DOCKERHUB_PASSWORD>
+DOCKERHUB_USERNAME=<DOCKERHUB_USERNAME>
+POSTGRES_DB=kittygram
+POSTGRES_PASSWORD=kittygram_password
+POSTGRES_USER=kittygram_user
+SSH_PRIVATE_KEY=<SSH_PRIVATE_KEY>
+SSH_PUBLIC_KEY=<SSH_PUBLIC_KEY>
+TELEGRAM_TO=<Telegram ID пользователя, кому шлем оповещение>
+TELEGRAM_TOKEN=<Telegram Token вашего бота>
+VM_USER=ubuntu
+YC_CLOUD_ID=<YC_CLOUD_ID>
+YC_FOLDER_ID=<YC_FOLDER_ID>
+YC_SERVICE_ACCOUNT_KEY=<YC_SERVICE_ACCOUNT_KEY>
+YC_STORAGE_ACCESS_KEY=<Идентификатор ключа S3>
+YC_STORAGE_SECRET_KEY=<Ваш секретный ключ S3>
+YC_TFSTATE_BUCKET=dalukyanov-tfstate
+# Не требуется. Подключение будет через сервисный аккаунт, указанный в YC_SERVICE_ACCOUNT_KEY
+# из-за изменений в политике Yandex Cloud в июле 2026
+YC_TOKEN=<Не требуется>
+YC_ZONE=ru-central1-b
 ```
 
 ## Создание сервисного аккаунта
@@ -82,3 +84,5 @@ YC_ZONE
 curl http://<external_ip>:9000
 curl http://<external_ip>:9000/api/cats/
 ```
+
+На момент отправки актуальный адрес: http://51.250.100.48:9000

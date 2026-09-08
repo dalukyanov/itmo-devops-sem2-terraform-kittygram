@@ -1,3 +1,24 @@
+# Передаются через GitHub Secrets
+
+APP_BUCKET_NAME=dalukyanov-app-bucket
+DJANGO_SECRET_KEY=<DJANGO_SECRET_KEY>
+DOCKERHUB_PASSWORD=<DOCKERHUB_PASSWORD>
+DOCKERHUB_USERNAME=<DOCKERHUB_USERNAME>
 POSTGRES_DB=kittygram
-POSTGRES_USER=kittygram_user
 POSTGRES_PASSWORD=kittygram_password
+POSTGRES_USER=kittygram_user
+SSH_PRIVATE_KEY=<SSH_PRIVATE_KEY>
+SSH_PUBLIC_KEY=<SSH_PUBLIC_KEY>
+TELEGRAM_TO=<Telegram ID пользователя, кому шлем оповещение>
+TELEGRAM_TOKEN=<Telegram Token вашего бота>
+VM_USER=ubuntu
+YC_CLOUD_ID=<YC_CLOUD_ID>
+YC_FOLDER_ID=<YC_FOLDER_ID>
+YC_SERVICE_ACCOUNT_KEY=<YC_SERVICE_ACCOUNT_KEY>
+YC_STORAGE_ACCESS_KEY=<Идентификатор ключа S3>
+YC_STORAGE_SECRET_KEY=<Ваш секретный ключ S3>
+YC_TFSTATE_BUCKET=dalukyanov-tfstate
+# Не требуется. Подключение будет через сервисный аккаунт, указанный в YC_SERVICE_ACCOUNT_KEY
+# из-за изменений в политике Yandex Cloud в июле 2026
+YC_TOKEN=<Не требуется>
+YC_ZONE=ru-central1-b
