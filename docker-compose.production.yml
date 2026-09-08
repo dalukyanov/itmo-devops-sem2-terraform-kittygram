@@ -26,13 +26,13 @@ services:
     depends_on:
       - backend
     restart: always
-    # Сборка статики при старте
     command: ["sh", "-c", "npm run build && cp -r /app/build/. /app/static/ && tail -f /dev/null"]
 
   gateway:
     image: ${DOCKERHUB_USERNAME}/kittygram_gateway:latest
     ports:
       - "9000:80"
+      - "80:80"
     volumes:
       - frontend_static:/usr/share/nginx/html:ro
       - backend_static:/var/html/static/:ro
