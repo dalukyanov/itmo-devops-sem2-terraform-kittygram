@@ -12,9 +12,7 @@ services:
     image: ${DOCKERHUB_USERNAME}/kittygram_backend:latest
     env_file: .env
     volumes:
-      # Том для статики Django (путь совпадает с STATIC_ROOT в settings.py)
       - backend_static:/app/staticfiles/
-      # Том для медиафайлов Django (путь совпадает с MEDIA_ROOT в settings.py)
       - backend_media:/app/media/
     depends_on:
       - postgres
@@ -36,11 +34,8 @@ services:
     ports:
       - "9000:80"
     volumes:
-      # Статика фронтенда
       - frontend_static:/usr/share/nginx/html:ro
-      # Статика бэкенда (путь совпадает с alias в nginx.conf)
       - backend_static:/var/html/static/:ro
-      # Медиа бэкенда (путь совпадает с alias в nginx.conf)
       - backend_media:/var/html/media/:ro
     depends_on:
       - frontend
